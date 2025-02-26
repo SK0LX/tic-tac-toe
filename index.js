@@ -1,13 +1,18 @@
 const CROSS = 'X';
 const ZERO = 'O';
 const EMPTY = ' ';
-
+let currentPlayer = 'X';
+let gameState = [[EMPTY, EMPTY, EMPTY],
+    [EMPTY, EMPTY, EMPTY],
+    [EMPTY, EMPTY, EMPTY]];
+let gameActive = true;
 const container = document.getElementById('fieldWrapper');
 
 startGame();
 addResetListener();
 
 function startGame () {
+    let grid = parseInt();
     renderGrid(3);
 }
 
@@ -27,13 +32,64 @@ function renderGrid (dimension) {
 }
 
 function cellClickHandler (row, col) {
-    // Пиши код тут
+    if (!gameActive) return;
     console.log(`Clicked on cell: ${row}, ${col}`);
+    if (gameState[row][col] === EMPTY) {
+        gameState[row][col] = currentPlayer;
+        renderSymbolInCell(currentPlayer, row, col);
+        let winCombination = checkWin(currentPlayer);
+        if (winCombination !== null) {
+            gameActive = false;
+            drawWin(winCombination);
+        }
+        currentPlayer === CROSS ? currentPlayer = ZERO : currentPlayer = CROSS;
+    }
+    checkDraw();
+}
 
+function checkWin(player) {
+    const winConditions = [
+        [0, 1, 2],
+        [3, 4, 5],
+        [6, 7, 8],
+        [0, 3, 6],
+        [1, 4, 7],
+        [2, 5, 8],
+        [0, 4, 8],
+        [2, 4, 6]
+    ];
+    const flatGameState = gameState.flat();
 
-    /* Пользоваться методом для размещения символа в клетке так:
-        renderSymbolInCell(ZERO, row, col);
-     */
+    const winningCombo = winConditions.find(condition => {
+        return condition.every(index => flatGameState[index] === player);
+    });
+    return winningCombo || null;
+}
+
+function drawWin(combination) {
+    combination.forEach(index => {
+        const row = Math.floor(index / 3);
+        const col = index % 3;
+        renderSymbolInCell(gameState[row][col], row, col, '#ff0000');
+    });
+}
+
+function checkDraw() {
+    let hasEmptyCell = false;
+    for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 3; j++) {
+            if (gameState[i][j] === EMPTY) {
+                hasEmptyCell = true;
+                break;
+            }
+        }
+        if (hasEmptyCell) break;
+    }
+    
+    if (!hasEmptyCell && !checkWin(CROSS) && !checkWin(ZERO)) {
+        alert("Победила дружба!");
+        gameActive = false;
+    }
 }
 
 function renderSymbolInCell (symbol, row, col, color = '#333') {
@@ -55,6 +111,12 @@ function addResetListener () {
 
 function resetClickHandler () {
     console.log('reset!');
+    gameState = [[EMPTY, EMPTY, EMPTY],
+        [EMPTY, EMPTY, EMPTY],
+        [EMPTY, EMPTY, EMPTY]];
+    gameActive = true;
+    currentPlayer = CROSS;
+    renderGrid(3);
 }
 
 
