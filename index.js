@@ -32,21 +32,24 @@ function renderGrid(dimension) {
 }
 
 function cellClickHandler(row, col) {
-    if (!gameActive || gameState[row][col] !== EMPTY) return;
-    gameState[row][col] = currentPlayer;
-    renderSymbolInCell(currentPlayer, row, col);
-    const winCombination = checkWin(currentPlayer, row, col);
-    if (winCombination != null) {
-        gameActive = false;
-        drawWin(winCombination);
-        alert(currentPlayer);
-    } else if (checkDraw()) {
-        alert("Победила дружба!");
-        gameActive = false;
+    if (currentPlayer === CROSS) {
+        if (!gameActive || gameState[row][col] !== EMPTY) return;
+        gameState[row][col] = currentPlayer;
+        renderSymbolInCell(currentPlayer, row, col);
+        const winCombination = checkWin(currentPlayer, row, col);
+        if (winCombination != null) {
+            gameActive = false;
+            drawWin(winCombination);
+            alert(currentPlayer);
+        } else if (checkDraw()) {
+            alert("Победила дружба!");
+            gameActive = false;
+        } 
     } else {
-        expandGrid()
-        currentPlayer = currentPlayer === CROSS ? ZERO : CROSS;
+        miniAIMove()
     }
+    expandGrid()
+    currentPlayer = currentPlayer === CROSS ? ZERO : CROSS;
 }
 
 function checkWin(player, row, col) {
@@ -76,6 +79,63 @@ function getSimilarCells(player, row, col, dx, dy) {
 
 function checkDraw() {
     return gameState.flat().every(cell => cell !== EMPTY);
+}
+
+function miniAIMove() {
+    let bestMove = getBestMoveAi();
+    if (bestMove != null) {
+        renderSymbolInCell(currentPlayer, bestMove[0], bestMove[1]);
+        gameState[bestMove[0]][bestMove[1]] = currentPlayer;
+        const winCombination = checkWin(currentPlayer, bestMove[0], bestMove[1]);
+        if (winCombination != null) {
+            gameActive = false;
+            drawWin(winCombination);
+            alert(currentPlayer + ' победил!');
+            return;
+        }
+    } else {
+        const emptyCellsForAi = [];
+        for (let i = 0; i < gridSize; i++) {
+            for (let j = 0; j < gridSize; j++) {
+                if (gameState[i][j] === EMPTY) {
+                    emptyCellsForAi.push([i, j]);
+                }
+            }
+        }
+        if (emptyCellsForAi.length > 0) {
+            const randomIndex = Math.floor(Math.random() * emptyCellsForAi.length);
+            const [row, col] = emptyCellsForAi[randomIndex];
+            gameState[row][col] = currentPlayer;
+            renderSymbolInCell(currentPlayer, row, col);
+            const winCombination = checkWin(currentPlayer, row, col);
+            if (winCombination != null) {
+                gameActive = false;
+                drawWin(winCombination);
+                alert(currentPlayer + ' победил!');
+                return;
+            }
+        }
+    }
+    if (checkDraw()) {
+        alert("Победила дружба!");
+        gameActive = false;
+    }
+}
+
+
+function getBestMoveAi() {
+    for (let i = 0; i < gridSize; i++) {
+        for (let j = 0; j < gridSize; j++) {
+            if (gameState[i][j] === EMPTY) {
+                gameState[i][j] = currentPlayer;
+                if (checkWin(currentPlayer, i, j)) {
+                    return [i, j];
+                }
+                gameState[i][j] = EMPTY;
+            }
+        }
+    }
+    return null;
 }
 
 function renderSymbolInCell(symbol, row, col, color = '#333') {
